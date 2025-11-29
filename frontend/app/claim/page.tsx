@@ -214,7 +214,7 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <div className="glass-panel rounded-xl p-3 border border-border/60">
       <div className="text-xs text-slate mb-1">{label}</div>
-      <div className="text-sm font-semibold break-words">{value}</div>
+      <div className="text-sm font-semibold break-words break-all">{value}</div>
     </div>
   );
 }

@@ -432,7 +432,7 @@ function Stat({ label, value, compact }: { label: string; value: string; compact
   return (
     <div className="glass-panel rounded-xl p-3 border border-border/60">
       <div className="text-xs text-slate mb-1">{label}</div>
-      <div className={`font-semibold ${compact ? "text-xs" : "text-sm"}`}>{value}</div>
+      <div className={`font-semibold ${compact ? "text-xs" : "text-sm"} break-all`}>{value}</div>
     </div>
   );
 }
