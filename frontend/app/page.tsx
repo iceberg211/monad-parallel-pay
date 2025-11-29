@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { ArrowRight, Zap, Wallet, Sparkles } from "lucide-react";
+import Link from "next/link";
+import { WalletConnectButton } from "@/components/wallet-connect";
 
 const highlights = [
   {
@@ -22,6 +23,9 @@ const highlights = [
 export default function HomePage() {
   return (
     <main className="max-w-6xl mx-auto px-4 py-16 space-y-16">
+      <div className="flex justify-end">
+        <WalletConnectButton />
+      </div>
       <section className="grid gap-10 lg:grid-cols-2 items-center">
         <div className="space-y-6">
           <div className="badge">Monad 并行批量支付</div>

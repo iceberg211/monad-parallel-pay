@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import { ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
 import {
   useAccount,
   useReadContract,
@@ -47,6 +48,20 @@ export default function ClaimPage() {
       enabled: Boolean(writeClaim.data)
     }
   });
+
+  const payout = useMemo(
+    () =>
+      payoutInfo
+        ? {
+            token: payoutInfo[0],
+            creator: payoutInfo[1],
+            totalAmount: payoutInfo[2],
+            fundedAmount: payoutInfo[3],
+            closed: payoutInfo[4]
+          }
+        : null,
+    [payoutInfo]
+  );
 
   useEffect(() => {
     if (claimConfirmed) {
@@ -101,13 +116,19 @@ export default function ClaimPage() {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-8">
+      <div className="flex items-center justify-between gap-3">
+        <Link className="button-secondary inline-flex items-center gap-2" href="/">
+          <ArrowLeft className="h-4 w-4" /> 返回首页
+        </Link>
+        <WalletConnectButton />
+      </div>
+
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="badge">领取页面</div>
           <h1 className="text-3xl font-semibold mt-2">输入 payoutId → 查询 → 一键领取</h1>
           <p className="text-slate text-sm mt-2">并行 claim，不互相阻塞；金额基于合约 claimable[payoutId][address]。</p>
         </div>
-        <WalletConnectButton />
       </div>
 
       <div className="card space-y-4">
@@ -133,21 +154,21 @@ export default function ClaimPage() {
         {currentId !== null ? <p className="text-xs text-slate">当前 payoutId：{currentId.toString()}</p> : null}
       </div>
 
-      {payoutInfo ? (
+      {payout ? (
         <div className="card space-y-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="badge">批次信息</div>
-            {payoutInfo.closed ? (
+            {payout.closed ? (
               <span className="badge border-rose-400/60 text-rose-200">已关闭</span>
             ) : (
               <span className="badge border-mint/50 text-mint">开放中</span>
             )}
           </div>
           <div className="grid gap-3 md:grid-cols-3 text-sm">
-            <Info label="Token" value={formatToken(payoutInfo.token)} />
-            <Info label="批次创建者" value={truncateAddress(payoutInfo.creator)} />
-            <Info label="totalAmount" value={`${formatAmount(payoutInfo.totalAmount)} (18 位)`} />
-            <Info label="当前余额 fundedAmount" value={`${formatAmount(payoutInfo.fundedAmount)} (18 位)`} />
+            <Info label="Token" value={formatToken(payout.token)} />
+            <Info label="批次创建者" value={truncateAddress(payout.creator)} />
+            <Info label="totalAmount" value={`${formatAmount(payout.totalAmount)} (18 位)`} />
+            <Info label="当前余额 fundedAmount" value={`${formatAmount(payout.fundedAmount)} (18 位)`} />
           </div>
         </div>
       ) : currentId !== null ? (
