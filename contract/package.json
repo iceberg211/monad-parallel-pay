@@ -8,16 +8,22 @@
     "clean": "hardhat clean",
     "deploy:local": "hardhat ignition deploy ignition/modules/PayoutManager.ts",
     "deploy:testnet": "hardhat ignition deploy ignition/modules/PayoutManager.ts --network monadTestnet",
-    "node": "hardhat node"
+    "deploy:airdrop:local": "hardhat ignition deploy ignition/modules/AirdropSystem.ts",
+    "deploy:airdrop:testnet": "hardhat ignition deploy ignition/modules/AirdropSystem.ts --network monadTestnet",
+    "node": "hardhat node",
+    "sync-frontend": "node scripts/sync-frontend.mjs"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.0.5",
     "@nomicfoundation/hardhat-toolbox-viem": "^5.0.1",
     "@types/node": "^22.19.1",
+    "dotenv": "^16.4.7",
     "forge-std": "git+https://github.com/foundry-rs/forge-std.git",
     "hardhat": "^3.0.16",
-    "dotenv": "^16.4.7",
     "typescript": "~5.8.3",
     "viem": "^2.40.3"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.4.0"
   }
 }

@@ -1,8 +1,12 @@
 import payoutManagerAbiJson from "./payoutManager.abi.json";
+import payoutManagerDeployment from "./payoutManager.deployment.json";
 import { Address, type Abi } from "viem";
 
-export const PAYOUT_MANAGER_ADDRESS = (process.env.NEXT_PUBLIC_PAYOUT_MANAGER_ADDRESS ??
-  "0xA162A14bA82c59cd6A4780B145989F8460C1587d") as Address;
+export const PAYOUT_MANAGER_ADDRESS = (
+  process.env.NEXT_PUBLIC_PAYOUT_MANAGER_ADDRESS ??
+  payoutManagerDeployment.address ??
+  "0x0000000000000000000000000000000000000000"
+) as Address;
 
 export const payoutManagerAbi = payoutManagerAbiJson as unknown as Abi;
 

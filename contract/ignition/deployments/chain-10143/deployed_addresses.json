@@ -1,3 +1,4 @@
 {
-  "PayoutManagerModule#PayoutManager": "0xA162A14bA82c59cd6A4780B145989F8460C1587d"
+  "AirdropSystemModule#AirdropToken": "0x8583b5e93cc3399439D3eE20e96aeE49b7dFF943",
+  "AirdropSystemModule#PayoutManager": "0x4B60840048724A6d308fd4527f3c4B1215D9e2BC"
 }

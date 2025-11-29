@@ -48,6 +48,7 @@ export default function EmployerPage() {
   const [createdPayoutId, setCreatedPayoutId] = useState<bigint | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
+  const [importAmount, setImportAmount] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
   const { data: nextPayoutId, refetch: refetchNextId } = useReadContract({
@@ -145,6 +146,7 @@ export default function EmployerPage() {
   const openImportModal = () => {
     setImportError(null);
     setImportText("");
+    setImportAmount("");
     setIsImportOpen(true);
   };
 
@@ -165,7 +167,7 @@ export default function EmployerPage() {
     setRecipients((prev) =>
       validAddresses.map((addr, idx) => ({
         address: addr,
-        amount: prev[idx]?.amount ?? "",
+        amount: importAmount || (prev[idx]?.amount ?? ""),
       }))
     );
     setIsImportOpen(false);
@@ -269,6 +271,15 @@ export default function EmployerPage() {
                 placeholder="请粘贴包含地址的文本..."
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
+              />
+            </label>
+            <label className="space-y-2 block">
+              <span className="text-sm text-slate">统一设置金额（可选）</span>
+              <input
+                className="input-base"
+                placeholder="若填写，将为所有导入地址设置此金额"
+                value={importAmount}
+                onChange={(e) => setImportAmount(e.target.value)}
               />
             </label>
             {importError ? (
