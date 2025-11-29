@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { ArrowRight, ListPlus, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import {
   useAccount,
   useReadContract,
@@ -37,6 +37,9 @@ export default function EmployerPage() {
   const [fundPayoutId, setFundPayoutId] = useState<string>("");
   const [fundAmount, setFundAmount] = useState<string>("");
   const [createdPayoutId, setCreatedPayoutId] = useState<bigint | null>(null);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importError, setImportError] = useState<string | null>(null);
 
   const {
     data: nextPayoutId,
@@ -99,6 +102,33 @@ export default function EmployerPage() {
   };
 
   const fillSamples = () => setRecipients(sampleRecipients);
+
+  const openImportModal = () => {
+    setImportError(null);
+    setImportText("");
+    setIsImportOpen(true);
+  };
+
+  const closeImportModal = () => setIsImportOpen(false);
+
+  const handleImportConfirm = () => {
+    setImportError(null);
+    const matches = importText.match(/0x[a-fA-F0-9]{40}/g) ?? [];
+    const validAddresses = matches.filter((addr) => isAddress(addr)) as string[];
+
+    if (!validAddresses.length) {
+      setImportError("未找到有效地址，请检查粘贴内容");
+      return;
+    }
+
+    setRecipients((prev) =>
+      validAddresses.map((addr, idx) => ({
+        address: addr,
+        amount: prev[idx]?.amount ?? ""
+      }))
+    );
+    setIsImportOpen(false);
+  };
 
   const handleCreate = async () => {
     setCreateError(null);
@@ -169,7 +199,39 @@ export default function EmployerPage() {
   };
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-12 space-y-10">
+    <>
+      {isImportOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="card max-w-2xl w-full space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="badge">批量导入</div>
+                <h3 className="text-xl font-semibold mt-2">粘贴收款地址列表</h3>
+                <p className="text-sm text-slate mt-1">会提取文本中的有效 0x 地址并按顺序填充表单，自动忽略前缀编号、昵称与非法行。</p>
+              </div>
+              <button className="button-secondary" onClick={closeImportModal}>关闭</button>
+            </div>
+            <label className="space-y-2 block">
+              <span className="text-sm text-slate">粘贴文本</span>
+              <textarea
+                className="input-base min-h-[220px] resize-vertical"
+                placeholder="粘贴包含地址的文本，系统会自动提取 0x 开头的有效地址"
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+              />
+            </label>
+            {importError ? <div className="text-xs text-rose-300">{importError}</div> : null}
+            <div className="flex items-center gap-3 justify-end">
+              <button className="button-secondary" onClick={closeImportModal}>取消</button>
+              <button className="button-primary inline-flex items-center gap-2" onClick={handleImportConfirm}>
+                <ListPlus className="h-4 w-4" /> 确认导入
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <main className="max-w-5xl mx-auto px-4 py-12 space-y-10">
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="badge">雇主控制台</div>
@@ -207,9 +269,14 @@ export default function EmployerPage() {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm text-slate">收款人列表（金额默认按 18 位精度解析）</span>
-            <button className="button-secondary inline-flex items-center gap-2" onClick={addRecipient}>
-              <Plus className="h-4 w-4" /> 添加收款人
-            </button>
+            <div className="flex items-center gap-2">
+              <button className="button-secondary inline-flex items-center gap-2" onClick={openImportModal}>
+                <ListPlus className="h-4 w-4" /> 批量导入
+              </button>
+              <button className="button-secondary inline-flex items-center gap-2" onClick={addRecipient}>
+                <Plus className="h-4 w-4" /> 添加收款人
+              </button>
+            </div>
           </div>
           <div className="space-y-3">
             {recipients.map((row, idx) => (
@@ -334,7 +401,8 @@ export default function EmployerPage() {
           领取路径：把 payoutId 发给收款人 → 收款人前往 <Link className="underline" href="/claim">/claim</Link> 连接钱包查询并领取。
         </p>
       </div>
-    </main>
+      </main>
+    </>
   );
 }
 
