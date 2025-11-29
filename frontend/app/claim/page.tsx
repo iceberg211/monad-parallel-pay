@@ -49,19 +49,20 @@ export default function ClaimPage() {
     }
   });
 
-  const payout = useMemo(
-    () =>
-      payoutInfo
-        ? {
-            token: payoutInfo[0],
-            creator: payoutInfo[1],
-            totalAmount: payoutInfo[2],
-            fundedAmount: payoutInfo[3],
-            closed: payoutInfo[4]
-          }
-        : null,
-    [payoutInfo]
-  );
+  const payout = useMemo(() => {
+    if (!payoutInfo || !Array.isArray(payoutInfo)) return null;
+    const [creator, token, totalAmount, fundedAmount, closed, title, payoutType] =
+      payoutInfo as unknown as [
+        `0x${string}`,
+        `0x${string}`,
+        bigint,
+        bigint,
+        boolean,
+        string,
+        number
+      ];
+    return { creator, token, totalAmount, fundedAmount, closed, title, payoutType };
+  }, [payoutInfo]);
 
   useEffect(() => {
     if (claimConfirmed) {
@@ -111,7 +112,7 @@ export default function ClaimPage() {
   };
 
   const canClaim = useMemo(() => {
-    return Boolean(claimableAmount && claimableAmount > 0n);
+    return typeof claimableAmount === "bigint" && claimableAmount > 0n;
   }, [claimableAmount]);
 
   return (
@@ -181,7 +182,7 @@ export default function ClaimPage() {
           {isConnected && address ? <span className="badge">{truncateAddress(address)}</span> : null}
         </div>
         <div className="text-2xl font-semibold">
-          {claimableAmount !== undefined ? `${formatAmount(claimableAmount)} （18 位展示）` : "-"}
+          {typeof claimableAmount === "bigint" ? `${formatAmount(claimableAmount)} （18 位展示）` : "-"}
         </div>
         <p className="text-xs text-slate">默认展示 18 位精度，若为 ERC20 请按该 Token 精度预估数值。</p>
         <div className="flex items-center gap-3">
