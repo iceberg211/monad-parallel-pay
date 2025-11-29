@@ -13,7 +13,9 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
-      "@": path.resolve(__dirname, ".")
+      "@": path.resolve(__dirname, "."),
+      // Fix for @metamask/sdk trying to import react-native-async-storage
+      "@react-native-async-storage/async-storage": false
     };
     return config;
   }

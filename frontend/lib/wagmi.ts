@@ -9,15 +9,27 @@ const connectors = [
   injected({ shimDisconnect: true }),
   ...(walletConnectProjectId
     ? [
-        walletConnect({
-          projectId: walletConnectProjectId,
-          showQrModal: true
-        })
-      ]
+      walletConnect({
+        projectId: walletConnectProjectId,
+        showQrModal: true
+      })
+    ]
     : [])
 ];
 
-const chains = [hardhat, sepolia, mainnet] as const;
+const monadTestnet = {
+  id: 10143,
+  name: "Monad Testnet",
+  nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
+  rpcUrls: {
+    default: { http: ["https://testnet-rpc.monad.xyz"] },
+  },
+  blockExplorers: {
+    default: { name: "Monad Explorer", url: "https://testnet.monadexplorer.com" },
+  },
+} as const;
+
+const chains = [hardhat, sepolia, mainnet, monadTestnet] as const;
 
 export const wagmiConfig = createConfig({
   chains,
@@ -25,7 +37,8 @@ export const wagmiConfig = createConfig({
   transports: {
     [hardhat.id]: http(rpcUrl ?? "http://127.0.0.1:8545"),
     [sepolia.id]: http(),
-    [mainnet.id]: http()
+    [mainnet.id]: http(),
+    [monadTestnet.id]: http()
   },
   ssr: true
 });
