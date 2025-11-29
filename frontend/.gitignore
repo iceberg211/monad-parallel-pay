@@ -5,6 +5,9 @@
 /dist
 .next
 
+# Next.js build cache
+/.next
+
 # pnpm deploy output
 /bundle
 
