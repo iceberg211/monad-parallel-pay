@@ -145,12 +145,12 @@ export default function ClaimPage() {
 
       <div className="flex items-center justify-between gap-4">
         <div>
-          <div className="badge">领取页面</div>
+          <div className="badge">员工自助领取</div>
           <h1 className="text-3xl font-semibold mt-2">
-            输入 payoutId → 查询 → 一键领取
+            输入清单编号，一键领取工资
           </h1>
           <p className="text-slate text-sm mt-2">
-            并行 claim，不互相阻塞；金额基于合约 claimable[payoutId][address]。
+            系统支持万人同时领取，资金秒级到账。
           </p>
         </div>
       </div>
@@ -158,10 +158,10 @@ export default function ClaimPage() {
       <div className="card space-y-4">
         <div className="grid gap-3 md:grid-cols-[2fr_auto] items-end">
           <label className="space-y-2">
-            <span className="text-sm text-slate">payoutId</span>
+            <span className="text-sm text-slate">清单编号</span>
             <input
               className="input-base"
-              placeholder="输入要查询的 payoutId"
+              placeholder="请输入雇主提供的编号"
               value={payoutIdInput}
               onChange={(e) => setPayoutIdInput(e.target.value.trim())}
             />
@@ -183,7 +183,7 @@ export default function ClaimPage() {
         </div>
         {currentId !== null ? (
           <p className="text-xs text-slate">
-            当前 payoutId：{currentId.toString()}
+            当前编号：{currentId.toString()}
           </p>
         ) : null}
       </div>
@@ -191,7 +191,7 @@ export default function ClaimPage() {
       {payout ? (
         <div className="card space-y-4">
           <div className="flex flex-wrap items-center gap-2">
-            <div className="badge">批次信息</div>
+            <div className="badge">清单详情</div>
             {payout.closed ? (
               <span className="badge border-rose-400/60 text-rose-200">
                 已关闭
@@ -201,15 +201,15 @@ export default function ClaimPage() {
             )}
           </div>
           <div className="grid gap-3 md:grid-cols-3 text-sm">
-            <Info label="Token" value={formatToken(payout.token)} />
-            <Info label="批次创建者" value={truncateAddress(payout.creator)} />
+            <Info label="币种" value={formatToken(payout.token)} />
+            <Info label="创建人" value={truncateAddress(payout.creator)} />
             <Info
-              label="totalAmount"
-              value={`${formatAmount(payout.totalAmount)} (18 位)`}
+              label="清单总额"
+              value={`${formatAmount(payout.totalAmount)}`}
             />
             <Info
-              label="当前余额 fundedAmount"
-              value={`${formatAmount(payout.fundedAmount)} (18 位)`}
+              label="资金池余额"
+              value={`${formatAmount(payout.fundedAmount)}`}
             />
           </div>
         </div>
@@ -219,18 +219,18 @@ export default function ClaimPage() {
 
       <div className="card space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="section-title mb-0">我的可领取金额</h3>
+          <h3 className="section-title mb-0">待领取金额</h3>
           {isConnected && address ? (
             <span className="badge">{truncateAddress(address)}</span>
           ) : null}
         </div>
         <div className="text-2xl font-semibold">
           {typeof claimableAmount === "bigint"
-            ? `${formatAmount(claimableAmount)} （18 位展示）`
+            ? `${formatAmount(claimableAmount)}`
             : "-"}
         </div>
         <p className="text-xs text-slate">
-          默认展示 18 位精度，若为 ERC20 请按该 Token 精度预估数值。
+          金额单位：MON/Token
         </p>
         <div className="flex items-center gap-3">
           <button
@@ -244,12 +244,12 @@ export default function ClaimPage() {
               </>
             ) : (
               <>
-                立即 claim <ArrowRight className="h-4 w-4" />
+                确认领取 <ArrowRight className="h-4 w-4" />
               </>
             )}
           </button>
           {!canClaim && (
-            <span className="text-xs text-slate">当前钱包可领取金额为 0</span>
+            <span className="text-xs text-slate">暂无可领资金</span>
           )}
         </div>
         {message ? <div className="text-xs text-mint">{message}</div> : null}
