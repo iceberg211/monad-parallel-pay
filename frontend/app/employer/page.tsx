@@ -17,7 +17,7 @@ import {
 } from "wagmi";
 import { Address, isAddress, parseEther, zeroAddress } from "viem";
 import Link from "next/link";
-import { PAYOUT_MANAGER_ADDRESS, payoutManagerAbi } from "@/config/contract";
+import { PAYOUT_MANAGER_ADDRESS, payoutManagerAbi, erc20Abi } from "@/config/contract";
 import { formatAmount } from "@/lib/format";
 import { WalletConnectButton } from "@/components/wallet-connect";
 
@@ -71,6 +71,7 @@ export default function EmployerPage() {
   });
 
   const createWrite = useWriteContract();
+  const approveWrite = useWriteContract();
   const fundWrite = useWriteContract();
   const payout = useMemo(() => {
     if (!payoutInfo || !Array.isArray(payoutInfo)) return null;
@@ -107,6 +108,15 @@ export default function EmployerPage() {
       hash: createWrite.data,
       query: {
         enabled: Boolean(createWrite.data),
+        refetchInterval: 2_000,
+      },
+    });
+
+  const { isLoading: approvingOnChain, isSuccess: approveConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: approveWrite.data,
+      query: {
+        enabled: Boolean(approveWrite.data),
         refetchInterval: 2_000,
       },
     });
@@ -222,6 +232,27 @@ export default function EmployerPage() {
     const diff = payout.totalAmount - payout.fundedAmount;
     return diff > 0n ? diff : 0n;
   }, [payout]);
+
+  const handleApprove = async () => {
+    setFundError(null);
+    try {
+      if (!payout?.token || payout.token === zeroAddress) {
+        throw new Error("原生币无需授权");
+      }
+      const amountWei = parseEther(fundAmount || "0");
+      if (amountWei <= 0n) throw new Error("授权金额需大于 0");
+
+      await approveWrite.writeContractAsync({
+        address: payout.token,
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [PAYOUT_MANAGER_ADDRESS, amountWei],
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "授权失败";
+      setFundError(message);
+    }
+  };
 
   const handleFund = async () => {
     setFundError(null);
@@ -499,6 +530,23 @@ export default function EmployerPage() {
           ) : null}
 
           <div className="flex items-center gap-3">
+            {!isNativeToken && payout ? (
+              <button
+                className="button-secondary inline-flex items-center gap-2"
+                onClick={handleApprove}
+                disabled={!isConnected || approveWrite.isPending || approvingOnChain}
+              >
+                {approveWrite.isPending || approvingOnChain ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> 授权中
+                  </>
+                ) : (
+                  <>
+                    授权代币
+                  </>
+                )}
+              </button>
+            ) : null}
             <button
               className="button-primary inline-flex items-center gap-2"
               onClick={handleFund}
@@ -517,6 +565,9 @@ export default function EmployerPage() {
             {!isConnected && (
               <span className="text-xs text-rose-300">请先连接钱包</span>
             )}
+            {approveConfirmed ? (
+              <span className="text-xs text-mint">授权成功</span>
+            ) : null}
             {fundError ? (
               <span className="text-xs text-rose-300">{fundError}</span>
             ) : null}
