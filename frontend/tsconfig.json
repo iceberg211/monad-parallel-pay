@@ -18,21 +18,10 @@
     "jsx": "preserve",
     "incremental": true,
     "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": [
-        "./app/*",
-        "./components/*",
-        "./lib/*",
-        "./config/*",
-        "./src/*"
-      ],
-      "~/*": [
-        "./app/*",
-        "./components/*",
-        "./lib/*",
-        "./config/*",
-        "./src/*"
-      ]
+      "@/*": ["./*"],
+      "~/*": ["./*"]
     },
     "plugins": [
       {

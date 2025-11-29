@@ -66,7 +66,7 @@ export default function ClaimPage() {
     try {
       const parsed = BigInt(payoutIdInput);
       setCurrentId(parsed);
-    } catch (err) {
+    } catch {
       setError("payoutId 需要是数字");
     }
   };
