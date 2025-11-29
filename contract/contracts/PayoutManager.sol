@@ -2,17 +2,21 @@
 pragma solidity ^0.8.20;
 
 interface IERC20 {
-    function transferFrom(address from, address to, uint256 value) external returns (bool);
+    function transferFrom(
+        address from,
+        address to,
+        uint256 value
+    ) external returns (bool);
     function transfer(address to, uint256 value) external returns (bool);
 }
 
 contract PayoutManager {
     struct Payout {
-        address creator;       // 批次创建者
-        address token;         // 支付 token，address(0) 表示原生币
-        uint256 totalAmount;   // 所有收款人理论总额
-        uint256 fundedAmount;  // 当前已打入额度（用于检查是否足够）
-        bool    closed;        // 是否关闭（关闭后不允许再 claim）
+        address creator; // 批次创建者
+        address token; // 支付 token，address(0) 表示原生币
+        uint256 totalAmount; // 所有收款人理论总额
+        uint256 fundedAmount; // 当前已打入额度（用于检查是否足够）
+        bool closed; // 是否关闭（关闭后不允许再 claim）
     }
 
     uint256 public nextPayoutId;
@@ -69,7 +73,13 @@ contract PayoutManager {
             closed: false
         });
 
-        emit PayoutCreated(nextPayoutId, msg.sender, token, total, recipients.length);
+        emit PayoutCreated(
+            nextPayoutId,
+            msg.sender,
+            token,
+            total,
+            recipients.length
+        );
 
         payoutId = nextPayoutId;
         nextPayoutId++;
@@ -86,7 +96,10 @@ contract PayoutManager {
             // ERC20
             require(msg.value == 0, "No native");
             require(amount > 0, "Zero amount");
-            require(IERC20(p.token).transferFrom(msg.sender, address(this), amount), "Transfer failed");
+            require(
+                IERC20(p.token).transferFrom(msg.sender, address(this), amount),
+                "Transfer failed"
+            );
         }
 
         p.fundedAmount += amount;
@@ -111,7 +124,10 @@ contract PayoutManager {
             (bool ok, ) = msg.sender.call{value: amount}("");
             require(ok, "Native transfer failed");
         } else {
-            require(IERC20(p.token).transfer(msg.sender, amount), "ERC20 transfer failed");
+            require(
+                IERC20(p.token).transfer(msg.sender, amount),
+                "ERC20 transfer failed"
+            );
         }
 
         emit PayoutClaimed(payoutId, msg.sender, amount);
@@ -137,9 +153,22 @@ contract PayoutManager {
             (bool ok, ) = msg.sender.call{value: amount}("");
             require(ok, "Native transfer failed");
         } else {
-            require(IERC20(p.token).transfer(msg.sender, amount), "ERC20 transfer failed");
+            require(
+                IERC20(p.token).transfer(msg.sender, amount),
+                "ERC20 transfer failed"
+            );
         }
 
         emit RemainingWithdrawn(payoutId, amount);
+    }
+
+    function getBatchClaimable(
+        uint256 payoutId,
+        address[] calldata users
+    ) external view returns (uint256[] memory amounts) {
+        amounts = new uint256[](users.length);
+        for (uint256 i = 0; i < users.length; i++) {
+            amounts[i] = claimable[payoutId][users[i]];
+        }
     }
 }

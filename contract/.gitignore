@@ -4,8 +4,6 @@
 # Compilation output
 /dist
 
-node_modules
-
 # pnpm deploy output
 /bundle
 
@@ -20,7 +18,3 @@ node_modules
 
 # Hardhat coverage reports
 /coverage
-
-.DS_Store
-
-.env
