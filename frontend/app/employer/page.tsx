@@ -68,6 +68,19 @@ export default function EmployerPage() {
 
   const createWrite = useWriteContract();
   const fundWrite = useWriteContract();
+  const payout = useMemo(
+    () =>
+      payoutInfo
+        ? {
+            token: payoutInfo[0],
+            creator: payoutInfo[1],
+            totalAmount: payoutInfo[2],
+            fundedAmount: payoutInfo[3],
+            closed: payoutInfo[4]
+          }
+        : null,
+    [payoutInfo]
+  );
 
   const { isLoading: creatingOnChain, isSuccess: createConfirmed } =
     useWaitForTransactionReceipt({
@@ -167,12 +180,12 @@ export default function EmployerPage() {
     }
   };
 
-  const isNativeToken = useMemo(() => payoutInfo?.token === zeroAddress, [payoutInfo?.token]);
+  const isNativeToken = useMemo(() => payout?.token === zeroAddress, [payout?.token]);
   const needAmount = useMemo(() => {
-    if (!payoutInfo) return null;
-    const diff = payoutInfo.totalAmount - payoutInfo.fundedAmount;
+    if (!payout) return null;
+    const diff = payout.totalAmount - payout.fundedAmount;
     return diff > 0n ? diff : 0n;
-  }, [payoutInfo]);
+  }, [payout]);
 
   const handleFund = async () => {
     setFundError(null);
@@ -232,13 +245,19 @@ export default function EmployerPage() {
       ) : null}
 
       <main className="max-w-5xl mx-auto px-4 py-12 space-y-10">
+        <div className="flex items-center justify-between gap-3">
+          <Link className="button-secondary inline-flex items-center gap-2" href="/">
+            返回首页
+          </Link>
+          <WalletConnectButton />
+        </div>
+
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="badge">雇主控制台</div>
           <h1 className="text-3xl font-semibold mt-2">创建批次 & 充值</h1>
           <p className="text-slate text-sm mt-2">按照 doc.md 指南：先 createPayout，再 fundPayout，然后通知收款人 claim。</p>
         </div>
-        <WalletConnectButton />
       </div>
 
       <div className="card space-y-4">
@@ -353,21 +372,21 @@ export default function EmployerPage() {
           <div className="space-y-2">
             <span className="text-sm text-slate">Token 类型</span>
             <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
-              {payoutInfo ? (payoutInfo.token === zeroAddress ? "原生币" : payoutInfo.token) : "输入 payoutId 以加载"}
+              {payout ? (payout.token === zeroAddress ? "原生币" : payout.token) : "输入 payoutId 以加载"}
             </div>
           </div>
         </div>
 
-        {payoutInfo ? (
+        {payout ? (
           <div className="grid gap-3 md:grid-cols-4 text-sm">
-            <Stat label="批次创建者" value={payoutInfo.creator} compact />
-            <Stat label="总额 totalAmount" value={`${formatAmount(payoutInfo.totalAmount)} (18 位)`} />
-            <Stat label="当前余额 fundedAmount" value={`${formatAmount(payoutInfo.fundedAmount)} (18 位)`} />
-            <Stat label="是否关闭" value={payoutInfo.closed ? "已关闭" : "开放中"} />
+            <Stat label="批次创建者" value={payout.creator} compact />
+            <Stat label="总额 totalAmount" value={`${formatAmount(payout.totalAmount)} (18 位)`} />
+            <Stat label="当前余额 fundedAmount" value={`${formatAmount(payout.fundedAmount)} (18 位)`} />
+            <Stat label="是否关闭" value={payout.closed ? "已关闭" : "开放中"} />
           </div>
         ) : null}
 
-        {needAmount !== null && payoutInfo ? (
+        {needAmount !== null && payout ? (
           <div className="text-xs text-slate">建议充值额度：{formatAmount(needAmount)} （total - funded）</div>
         ) : null}
 
