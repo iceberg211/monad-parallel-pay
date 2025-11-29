@@ -1,12 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowRight, ListPlus, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  ListPlus,
+  Loader2,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import {
   useAccount,
   useReadContract,
   useWriteContract,
-  useWaitForTransactionReceipt
+  useWaitForTransactionReceipt,
 } from "wagmi";
 import { Address, isAddress, parseEther, zeroAddress } from "viem";
 import Link from "next/link";
@@ -22,16 +29,18 @@ interface RecipientRow {
 const sampleRecipients: RecipientRow[] = [
   { address: "0x6B5bC9e7c7f49b1a20F49a0f2D1D8A98B6f0b0a1", amount: "0.25" },
   { address: "0x8E1B5C00d0e22bB6E5b93261c4d3Edc4bB5f3e4C", amount: "0.40" },
-  { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "0.35" }
+  { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "0.35" },
 ];
 
 export default function EmployerPage() {
   const { isConnected } = useAccount();
   const [tokenAddress, setTokenAddress] = useState<string>("");
-  const [recipients, setRecipients] = useState<RecipientRow[]>([{
-    address: "",
-    amount: ""
-  }]);
+  const [recipients, setRecipients] = useState<RecipientRow[]>([
+    {
+      address: "",
+      amount: "",
+    },
+  ]);
   const [createError, setCreateError] = useState<string | null>(null);
   const [fundError, setFundError] = useState<string | null>(null);
   const [fundPayoutId, setFundPayoutId] = useState<string>("");
@@ -41,46 +50,55 @@ export default function EmployerPage() {
   const [importText, setImportText] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
 
-  const {
-    data: nextPayoutId,
-    refetch: refetchNextId
-  } = useReadContract({
+  const { data: nextPayoutId, refetch: refetchNextId } = useReadContract({
     address: PAYOUT_MANAGER_ADDRESS,
     abi: payoutManagerAbi,
     functionName: "nextPayoutId",
     query: {
-      refetchInterval: 15_000
-    }
+      refetchInterval: 15_000,
+    },
   });
 
-  const {
-    data: payoutInfo,
-    refetch: refetchPayout
-  } = useReadContract({
+  const { data: payoutInfo, refetch: refetchPayout } = useReadContract({
     address: PAYOUT_MANAGER_ADDRESS,
     abi: payoutManagerAbi,
     functionName: "payouts",
     args: [fundPayoutId ? BigInt(fundPayoutId) : 0n],
     query: {
-      enabled: Boolean(fundPayoutId)
-    }
+      enabled: Boolean(fundPayoutId),
+    },
   });
 
   const createWrite = useWriteContract();
   const fundWrite = useWriteContract();
   const payout = useMemo(() => {
     if (!payoutInfo || !Array.isArray(payoutInfo)) return null;
-    const [creator, token, totalAmount, fundedAmount, closed, title, payoutType] =
-      payoutInfo as unknown as [
-        `0x${string}`,
-        `0x${string}`,
-        bigint,
-        bigint,
-        boolean,
-        string,
-        number
-      ];
-    return { creator, token, totalAmount, fundedAmount, closed, title, payoutType };
+    const [
+      creator,
+      token,
+      totalAmount,
+      fundedAmount,
+      closed,
+      title,
+      payoutType,
+    ] = payoutInfo as unknown as [
+      `0x${string}`,
+      `0x${string}`,
+      bigint,
+      bigint,
+      boolean,
+      string,
+      number
+    ];
+    return {
+      creator,
+      token,
+      totalAmount,
+      fundedAmount,
+      closed,
+      title,
+      payoutType,
+    };
   }, [payoutInfo]);
 
   const { isLoading: creatingOnChain, isSuccess: createConfirmed } =
@@ -88,8 +106,8 @@ export default function EmployerPage() {
       hash: createWrite.data,
       query: {
         enabled: Boolean(createWrite.data),
-        refetchInterval: 2_000
-      }
+        refetchInterval: 2_000,
+      },
     });
 
   const { isLoading: fundingOnChain, isSuccess: fundConfirmed } =
@@ -97,11 +115,15 @@ export default function EmployerPage() {
       hash: fundWrite.data,
       query: {
         enabled: Boolean(fundWrite.data),
-        refetchInterval: 2_000
-      }
+        refetchInterval: 2_000,
+      },
     });
 
-  const handleRecipientChange = (index: number, field: keyof RecipientRow, value: string) => {
+  const handleRecipientChange = (
+    index: number,
+    field: keyof RecipientRow,
+    value: string
+  ) => {
     setRecipients((prev) => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: value };
@@ -109,10 +131,13 @@ export default function EmployerPage() {
     });
   };
 
-  const addRecipient = () => setRecipients((prev) => [...prev, { address: "", amount: "" }]);
+  const addRecipient = () =>
+    setRecipients((prev) => [...prev, { address: "", amount: "" }]);
 
   const removeRecipient = (index: number) => {
-    setRecipients((prev) => (prev.length === 1 ? prev : prev.filter((_, i) => i !== index)));
+    setRecipients((prev) =>
+      prev.length === 1 ? prev : prev.filter((_, i) => i !== index)
+    );
   };
 
   const fillSamples = () => setRecipients(sampleRecipients);
@@ -128,7 +153,9 @@ export default function EmployerPage() {
   const handleImportConfirm = () => {
     setImportError(null);
     const matches = importText.match(/0x[a-fA-F0-9]{40}/g) ?? [];
-    const validAddresses = matches.filter((addr) => isAddress(addr)) as string[];
+    const validAddresses = matches.filter((addr) =>
+      isAddress(addr)
+    ) as string[];
 
     if (!validAddresses.length) {
       setImportError("未找到有效地址，请检查粘贴内容");
@@ -138,7 +165,7 @@ export default function EmployerPage() {
     setRecipients((prev) =>
       validAddresses.map((addr, idx) => ({
         address: addr,
-        amount: prev[idx]?.amount ?? ""
+        amount: prev[idx]?.amount ?? "",
       }))
     );
     setIsImportOpen(false);
@@ -154,7 +181,8 @@ export default function EmployerPage() {
       if (invalid) throw new Error("存在无效地址，检查填写");
 
       const token = tokenAddress ? (tokenAddress as Address) : zeroAddress;
-      if (tokenAddress && !isAddress(tokenAddress)) throw new Error("Token 地址格式不正确");
+      if (tokenAddress && !isAddress(tokenAddress))
+        throw new Error("Token 地址格式不正确");
 
       const amounts = validRows.map((r) => {
         if (Number(r.amount) <= 0) throw new Error("金额需大于 0");
@@ -170,7 +198,7 @@ export default function EmployerPage() {
         functionName: "createPayout",
         args: [token, recipientAddresses, amounts, "", 0],
         // 部分 RPC 估算可能失败，提供 gas 兜底
-        gas: 800_000n
+        gas: 800_000n,
       });
 
       setCreatedPayoutId(expectedId);
@@ -183,7 +211,10 @@ export default function EmployerPage() {
     }
   };
 
-  const isNativeToken = useMemo(() => payout?.token === zeroAddress, [payout?.token]);
+  const isNativeToken = useMemo(
+    () => payout?.token === zeroAddress,
+    [payout?.token]
+  );
   const needAmount = useMemo(() => {
     if (!payout) return null;
     const diff = payout.totalAmount - payout.fundedAmount;
@@ -203,7 +234,7 @@ export default function EmployerPage() {
         abi: payoutManagerAbi,
         functionName: "fundPayout",
         args: [payoutIdBig, amountWei],
-        value: isNativeToken ? amountWei : 0n
+        value: isNativeToken ? amountWei : 0n,
       });
 
       await refetchPayout();
@@ -223,9 +254,14 @@ export default function EmployerPage() {
               <div>
                 <div className="badge">批量导入</div>
                 <h3 className="text-xl font-semibold mt-2">粘贴收款地址列表</h3>
-                <p className="text-sm text-slate mt-1">会提取文本中的有效 0x 地址并按顺序填充表单，自动忽略前缀编号、昵称与非法行。</p>
+                <p className="text-sm text-slate mt-1">
+                  会提取文本中的有效 0x
+                  地址并按顺序填充表单，自动忽略前缀编号、昵称与非法行。
+                </p>
               </div>
-              <button className="button-secondary" onClick={closeImportModal}>关闭</button>
+              <button className="button-secondary" onClick={closeImportModal}>
+                关闭
+              </button>
             </div>
             <label className="space-y-2 block">
               <span className="text-sm text-slate">粘贴文本</span>
@@ -236,10 +272,17 @@ export default function EmployerPage() {
                 onChange={(e) => setImportText(e.target.value)}
               />
             </label>
-            {importError ? <div className="text-xs text-rose-300">{importError}</div> : null}
+            {importError ? (
+              <div className="text-xs text-rose-300">{importError}</div>
+            ) : null}
             <div className="flex items-center gap-3 justify-end">
-              <button className="button-secondary" onClick={closeImportModal}>取消</button>
-              <button className="button-primary inline-flex items-center gap-2" onClick={handleImportConfirm}>
+              <button className="button-secondary" onClick={closeImportModal}>
+                取消
+              </button>
+              <button
+                className="button-primary inline-flex items-center gap-2"
+                onClick={handleImportConfirm}
+              >
                 <ListPlus className="h-4 w-4" /> 确认导入
               </button>
             </div>
@@ -249,186 +292,258 @@ export default function EmployerPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-12 space-y-10">
         <div className="flex items-center justify-between gap-3">
-          <Link className="button-secondary inline-flex items-center gap-2" href="/">
+          <Link
+            className="button-secondary inline-flex items-center gap-2"
+            href="/"
+          >
             返回首页
           </Link>
           <WalletConnectButton />
         </div>
 
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <div className="badge">雇主控制台</div>
-          <h1 className="text-3xl font-semibold mt-2">创建批次 & 充值</h1>
-          <p className="text-slate text-sm mt-2">按照 doc.md 指南：先 createPayout，再 fundPayout，然后通知收款人 claim。</p>
-        </div>
-      </div>
-
-      <div className="card space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="section-title">创建批次</h2>
-          <button className="button-secondary inline-flex items-center gap-2" onClick={fillSamples}>
-            <Sparkles className="h-4 w-4" /> 示例收款人
-          </button>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2">
-          <label className="space-y-2">
-            <span className="text-sm text-slate">Token 地址（留空表示原生币）</span>
-            <input
-              className="input-base"
-              placeholder="0x... 或留空"
-              value={tokenAddress}
-              onChange={(e) => setTokenAddress(e.target.value.trim())}
-            />
-          </label>
-          <div className="space-y-2">
-            <span className="text-sm text-slate">下一个 payoutId</span>
-            <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
-              {typeof nextPayoutId === "bigint" ? nextPayoutId.toString() : "加载中..."}
-            </div>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="badge">雇主控制台</div>
+            <h1 className="text-3xl font-semibold mt-2">创建批次 & 充值</h1>
+            <p className="text-slate text-sm mt-2">
+              按照 doc.md 指南：先 createPayout，再 fundPayout，然后通知收款人
+              claim。
+            </p>
           </div>
         </div>
 
-        <div className="space-y-3">
+        <div className="card space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-slate">收款人列表（金额默认按 18 位精度解析）</span>
-            <div className="flex items-center gap-2">
-              <button className="button-secondary inline-flex items-center gap-2" onClick={openImportModal}>
-                <ListPlus className="h-4 w-4" /> 批量导入
-              </button>
-              <button className="button-secondary inline-flex items-center gap-2" onClick={addRecipient}>
-                <Plus className="h-4 w-4" /> 添加收款人
-              </button>
+            <h2 className="section-title">创建批次</h2>
+            <button
+              className="button-secondary inline-flex items-center gap-2"
+              onClick={fillSamples}
+            >
+              <Sparkles className="h-4 w-4" /> 示例收款人
+            </button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="space-y-2">
+              <span className="text-sm text-slate">
+                Token 地址（留空表示原生币）
+              </span>
+              <input
+                className="input-base"
+                placeholder="0x... 或留空"
+                value={tokenAddress}
+                onChange={(e) => setTokenAddress(e.target.value.trim())}
+              />
+            </label>
+            <div className="space-y-2">
+              <span className="text-sm text-slate">下一个 payoutId</span>
+              <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
+                {typeof nextPayoutId === "bigint"
+                  ? nextPayoutId.toString()
+                  : "加载中..."}
+              </div>
             </div>
           </div>
+
           <div className="space-y-3">
-            {recipients.map((row, idx) => (
-              <div key={idx} className="grid gap-3 md:grid-cols-[1.5fr_1fr_auto] items-center">
-                <input
-                  className="input-base"
-                  placeholder="收款人地址"
-                  value={row.address}
-                  onChange={(e) => handleRecipientChange(idx, "address", e.target.value)}
-                />
-                <input
-                  className="input-base"
-                  placeholder="金额，例如 0.25"
-                  value={row.amount}
-                  onChange={(e) => handleRecipientChange(idx, "amount", e.target.value)}
-                />
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate">
+                收款人列表（金额默认按 18 位精度解析）
+              </span>
+              <div className="flex items-center gap-2">
                 <button
                   className="button-secondary inline-flex items-center gap-2"
-                  onClick={() => removeRecipient(idx)}
-                  disabled={recipients.length === 1}
+                  onClick={openImportModal}
                 >
-                  <Trash2 className="h-4 w-4" /> 删除
+                  <ListPlus className="h-4 w-4" /> 批量导入
+                </button>
+                <button
+                  className="button-secondary inline-flex items-center gap-2"
+                  onClick={addRecipient}
+                >
+                  <Plus className="h-4 w-4" /> 添加收款人
                 </button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            className="button-primary inline-flex items-center gap-2"
-            onClick={handleCreate}
-            disabled={!isConnected || createWrite.isPending || creatingOnChain}
-          >
-            {createWrite.isPending || creatingOnChain ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> 提交中
-              </>
-            ) : (
-              <>
-                提交 createPayout <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
-          {!isConnected && <span className="text-xs text-rose-300">请先连接钱包</span>}
-          {createError ? <span className="text-xs text-rose-300">{createError}</span> : null}
-          {createConfirmed && createdPayoutId !== null ? (
-            <span className="text-xs text-mint">交易确认，预期 payoutId：{createdPayoutId.toString()}</span>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="card space-y-4">
-        <h2 className="section-title">为批次充值</h2>
-        <div className="grid gap-4 md:grid-cols-3">
-          <label className="space-y-2">
-            <span className="text-sm text-slate">payoutId</span>
-            <input
-              className="input-base"
-              placeholder="输入要充值的 payoutId"
-              value={fundPayoutId}
-              onChange={(e) => setFundPayoutId(e.target.value.trim())}
-            />
-          </label>
-          <label className="space-y-2">
-            <span className="text-sm text-slate">充值金额（按 18 位精度）</span>
-            <input
-              className="input-base"
-              placeholder="例如 1.5"
-              value={fundAmount}
-              onChange={(e) => setFundAmount(e.target.value)}
-            />
-          </label>
-          <div className="space-y-2">
-            <span className="text-sm text-slate">Token 类型</span>
-            <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
-              {payout ? (payout.token === zeroAddress ? "原生币" : payout.token) : "输入 payoutId 以加载"}
+            </div>
+            <div className="space-y-3">
+              {recipients.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="grid gap-3 md:grid-cols-[1.5fr_1fr_auto] items-center"
+                >
+                  <input
+                    className="input-base"
+                    placeholder="收款人地址"
+                    value={row.address}
+                    onChange={(e) =>
+                      handleRecipientChange(idx, "address", e.target.value)
+                    }
+                  />
+                  <input
+                    className="input-base"
+                    placeholder="金额，例如 0.25"
+                    value={row.amount}
+                    onChange={(e) =>
+                      handleRecipientChange(idx, "amount", e.target.value)
+                    }
+                  />
+                  <button
+                    className="button-secondary inline-flex items-center gap-2"
+                    onClick={() => removeRecipient(idx)}
+                    disabled={recipients.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" /> 删除
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
 
-        {payout ? (
-          <div className="grid gap-3 md:grid-cols-4 text-sm">
-            <Stat label="批次创建者" value={payout.creator} compact />
-            <Stat label="总额 totalAmount" value={`${formatAmount(payout.totalAmount)} (18 位)`} />
-            <Stat label="当前余额 fundedAmount" value={`${formatAmount(payout.fundedAmount)} (18 位)`} />
-            <Stat label="是否关闭" value={payout.closed ? "已关闭" : "开放中"} />
-          </div>
-        ) : null}
-
-        {needAmount !== null && payout ? (
-          <div className="text-xs text-slate">建议充值额度：{formatAmount(needAmount)} （total - funded）</div>
-        ) : null}
-
-        <div className="flex items-center gap-3">
-          <button
-            className="button-primary inline-flex items-center gap-2"
-            onClick={handleFund}
-            disabled={!isConnected || fundWrite.isPending || fundingOnChain}
-          >
-            {fundWrite.isPending || fundingOnChain ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> 充值中
-              </>
-            ) : (
-              <>
-                提交 fundPayout <ArrowRight className="h-4 w-4" />
-              </>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              className="button-primary inline-flex items-center gap-2"
+              onClick={handleCreate}
+              disabled={
+                !isConnected || createWrite.isPending || creatingOnChain
+              }
+            >
+              {createWrite.isPending || creatingOnChain ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> 提交中
+                </>
+              ) : (
+                <>
+                  提交 createPayout <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+            {!isConnected && (
+              <span className="text-xs text-rose-300">请先连接钱包</span>
             )}
-          </button>
-          {!isConnected && <span className="text-xs text-rose-300">请先连接钱包</span>}
-          {fundError ? <span className="text-xs text-rose-300">{fundError}</span> : null}
-          {fundConfirmed ? <span className="text-xs text-mint">充值交易已确认</span> : null}
+            {createError ? (
+              <span className="text-xs text-rose-300">{createError}</span>
+            ) : null}
+            {createConfirmed && createdPayoutId !== null ? (
+              <span className="text-xs text-mint">
+                交易确认，预期 payoutId：{createdPayoutId.toString()}
+              </span>
+            ) : null}
+          </div>
         </div>
-      </div>
 
-      <div className="text-sm text-slate">
-        <p>
-          提示：amount 统一按 18 位精度 parseEther 处理，若使用非 18 位 Token，请自行换算。原生币充值需要钱包链与合约链一致。
-        </p>
-        <p className="mt-2">
-          领取路径：把 payoutId 发给收款人 → 收款人前往 <Link className="underline" href="/claim">/claim</Link> 连接钱包查询并领取。
-        </p>
-      </div>
+        <div className="card space-y-4">
+          <h2 className="section-title">为批次充值</h2>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="space-y-2">
+              <span className="text-sm text-slate">payoutId</span>
+              <input
+                className="input-base"
+                placeholder="输入要充值的 payoutId"
+                value={fundPayoutId}
+                onChange={(e) => setFundPayoutId(e.target.value.trim())}
+              />
+            </label>
+            <label className="space-y-2">
+              <span className="text-sm text-slate">
+                充值金额（按 18 位精度）
+              </span>
+              <input
+                className="input-base"
+                placeholder="例如 1.5"
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+              />
+            </label>
+            <div className="space-y-2">
+              <span className="text-sm text-slate">Token 类型</span>
+              <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
+                {payout
+                  ? payout.token === zeroAddress
+                    ? "原生币"
+                    : payout.token
+                  : "输入 payoutId 以加载"}
+              </div>
+            </div>
+          </div>
+
+          {payout ? (
+            <div className="grid gap-3 md:grid-cols-4 text-sm">
+              <Stat label="批次创建者" value={payout.creator} compact />
+              <Stat
+                label="总额 totalAmount"
+                value={`${formatAmount(payout.totalAmount)} (18 位)`}
+              />
+              <Stat
+                label="当前余额 fundedAmount"
+                value={`${formatAmount(payout.fundedAmount)} (18 位)`}
+              />
+              <Stat
+                label="是否关闭"
+                value={payout.closed ? "已关闭" : "开放中"}
+              />
+            </div>
+          ) : null}
+
+          {needAmount !== null && payout ? (
+            <div className="text-xs text-slate">
+              建议充值额度：{formatAmount(needAmount)} （total - funded）
+            </div>
+          ) : null}
+
+          <div className="flex items-center gap-3">
+            <button
+              className="button-primary inline-flex items-center gap-2"
+              onClick={handleFund}
+              disabled={!isConnected || fundWrite.isPending || fundingOnChain}
+            >
+              {fundWrite.isPending || fundingOnChain ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> 充值中
+                </>
+              ) : (
+                <>
+                  提交 fundPayout <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+            {!isConnected && (
+              <span className="text-xs text-rose-300">请先连接钱包</span>
+            )}
+            {fundError ? (
+              <span className="text-xs text-rose-300">{fundError}</span>
+            ) : null}
+            {fundConfirmed ? (
+              <span className="text-xs text-mint">充值交易已确认</span>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="text-sm text-slate">
+          <p>
+            提示：amount 统一按 18 位精度 parseEther 处理，若使用非 18 位
+            Token，请自行换算。原生币充值需要钱包链与合约链一致。
+          </p>
+          <p className="mt-2">
+            领取路径：把 payoutId 发给收款人 → 收款人前往{" "}
+            <Link className="underline" href="/claim">
+              /claim
+            </Link>{" "}
+            连接钱包查询并领取。
+          </p>
+        </div>
       </main>
     </>
   );
 }
 
-function Stat({ label, value, compact }: { label: string; value: string; compact?: boolean }) {
+function Stat({
+  label,
+  value,
+  compact,
+}: {
+  label: string;
+  value: string;
+  compact?: boolean;
+}) {
   return (
     <div className="glass-panel rounded-xl p-3 border border-border/60">
       <div className="text-xs text-slate mb-1">{label}</div>

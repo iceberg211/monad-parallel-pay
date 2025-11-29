@@ -7,7 +7,7 @@ import {
   useAccount,
   useReadContract,
   useWaitForTransactionReceipt,
-  useWriteContract
+  useWriteContract,
 } from "wagmi";
 import { zeroAddress } from "viem";
 import { PAYOUT_MANAGER_ADDRESS, payoutManagerAbi } from "@/config/contract";
@@ -27,8 +27,8 @@ export default function ClaimPage() {
     functionName: "payouts",
     args: [currentId ?? 0n],
     query: {
-      enabled: currentId !== null
-    }
+      enabled: currentId !== null,
+    },
   });
 
   const { data: claimableAmount, refetch: refetchClaimable } = useReadContract({
@@ -37,31 +37,47 @@ export default function ClaimPage() {
     functionName: "claimable",
     args: [currentId ?? 0n, address ?? zeroAddress],
     query: {
-      enabled: currentId !== null && Boolean(address)
-    }
+      enabled: currentId !== null && Boolean(address),
+    },
   });
 
   const writeClaim = useWriteContract();
-  const { isLoading: claiming, isSuccess: claimConfirmed } = useWaitForTransactionReceipt({
-    hash: writeClaim.data,
-    query: {
-      enabled: Boolean(writeClaim.data)
-    }
-  });
+  const { isLoading: claiming, isSuccess: claimConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: writeClaim.data,
+      query: {
+        enabled: Boolean(writeClaim.data),
+      },
+    });
 
   const payout = useMemo(() => {
     if (!payoutInfo || !Array.isArray(payoutInfo)) return null;
-    const [creator, token, totalAmount, fundedAmount, closed, title, payoutType] =
-      payoutInfo as unknown as [
-        `0x${string}`,
-        `0x${string}`,
-        bigint,
-        bigint,
-        boolean,
-        string,
-        number
-      ];
-    return { creator, token, totalAmount, fundedAmount, closed, title, payoutType };
+    const [
+      creator,
+      token,
+      totalAmount,
+      fundedAmount,
+      closed,
+      title,
+      payoutType,
+    ] = payoutInfo as unknown as [
+      `0x${string}`,
+      `0x${string}`,
+      bigint,
+      bigint,
+      boolean,
+      string,
+      number
+    ];
+    return {
+      creator,
+      token,
+      totalAmount,
+      fundedAmount,
+      closed,
+      title,
+      payoutType,
+    };
   }, [payoutInfo]);
 
   useEffect(() => {
@@ -103,7 +119,7 @@ export default function ClaimPage() {
         address: PAYOUT_MANAGER_ADDRESS,
         abi: payoutManagerAbi,
         functionName: "claim",
-        args: [currentId]
+        args: [currentId],
       });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "领取失败";
@@ -118,7 +134,10 @@ export default function ClaimPage() {
   return (
     <main className="max-w-4xl mx-auto px-4 py-12 space-y-8">
       <div className="flex items-center justify-between gap-3">
-        <Link className="button-secondary inline-flex items-center gap-2" href="/">
+        <Link
+          className="button-secondary inline-flex items-center gap-2"
+          href="/"
+        >
           <ArrowLeft className="h-4 w-4" /> 返回首页
         </Link>
         <WalletConnectButton />
@@ -127,8 +146,12 @@ export default function ClaimPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <div className="badge">领取页面</div>
-          <h1 className="text-3xl font-semibold mt-2">输入 payoutId → 查询 → 一键领取</h1>
-          <p className="text-slate text-sm mt-2">并行 claim，不互相阻塞；金额基于合约 claimable[payoutId][address]。</p>
+          <h1 className="text-3xl font-semibold mt-2">
+            输入 payoutId → 查询 → 一键领取
+          </h1>
+          <p className="text-slate text-sm mt-2">
+            并行 claim，不互相阻塞；金额基于合约 claimable[payoutId][address]。
+          </p>
         </div>
       </div>
 
@@ -147,12 +170,22 @@ export default function ClaimPage() {
             <button className="button-secondary" onClick={handleLoad}>
               查询
             </button>
-            <button className="button-secondary" onClick={() => { refetchPayout(); refetchClaimable(); }}>
+            <button
+              className="button-secondary"
+              onClick={() => {
+                refetchPayout();
+                refetchClaimable();
+              }}
+            >
               <RefreshCw className="h-4 w-4" /> 刷新
             </button>
           </div>
         </div>
-        {currentId !== null ? <p className="text-xs text-slate">当前 payoutId：{currentId.toString()}</p> : null}
+        {currentId !== null ? (
+          <p className="text-xs text-slate">
+            当前 payoutId：{currentId.toString()}
+          </p>
+        ) : null}
       </div>
 
       {payout ? (
@@ -160,7 +193,9 @@ export default function ClaimPage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="badge">批次信息</div>
             {payout.closed ? (
-              <span className="badge border-rose-400/60 text-rose-200">已关闭</span>
+              <span className="badge border-rose-400/60 text-rose-200">
+                已关闭
+              </span>
             ) : (
               <span className="badge border-mint/50 text-mint">开放中</span>
             )}
@@ -168,8 +203,14 @@ export default function ClaimPage() {
           <div className="grid gap-3 md:grid-cols-3 text-sm">
             <Info label="Token" value={formatToken(payout.token)} />
             <Info label="批次创建者" value={truncateAddress(payout.creator)} />
-            <Info label="totalAmount" value={`${formatAmount(payout.totalAmount)} (18 位)`} />
-            <Info label="当前余额 fundedAmount" value={`${formatAmount(payout.fundedAmount)} (18 位)`} />
+            <Info
+              label="totalAmount"
+              value={`${formatAmount(payout.totalAmount)} (18 位)`}
+            />
+            <Info
+              label="当前余额 fundedAmount"
+              value={`${formatAmount(payout.fundedAmount)} (18 位)`}
+            />
           </div>
         </div>
       ) : currentId !== null ? (
@@ -179,12 +220,18 @@ export default function ClaimPage() {
       <div className="card space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="section-title mb-0">我的可领取金额</h3>
-          {isConnected && address ? <span className="badge">{truncateAddress(address)}</span> : null}
+          {isConnected && address ? (
+            <span className="badge">{truncateAddress(address)}</span>
+          ) : null}
         </div>
         <div className="text-2xl font-semibold">
-          {typeof claimableAmount === "bigint" ? `${formatAmount(claimableAmount)} （18 位展示）` : "-"}
+          {typeof claimableAmount === "bigint"
+            ? `${formatAmount(claimableAmount)} （18 位展示）`
+            : "-"}
         </div>
-        <p className="text-xs text-slate">默认展示 18 位精度，若为 ERC20 请按该 Token 精度预估数值。</p>
+        <p className="text-xs text-slate">
+          默认展示 18 位精度，若为 ERC20 请按该 Token 精度预估数值。
+        </p>
         <div className="flex items-center gap-3">
           <button
             className="button-primary inline-flex items-center gap-2"
@@ -201,7 +248,9 @@ export default function ClaimPage() {
               </>
             )}
           </button>
-          {!canClaim && <span className="text-xs text-slate">当前钱包可领取金额为 0</span>}
+          {!canClaim && (
+            <span className="text-xs text-slate">当前钱包可领取金额为 0</span>
+          )}
         </div>
         {message ? <div className="text-xs text-mint">{message}</div> : null}
         {error ? <div className="text-xs text-rose-300">{error}</div> : null}
