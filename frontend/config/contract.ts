@@ -133,3 +133,28 @@ export const payoutManagerAbi = [
     "outputs": [{ "name": "", "type": "uint256" }]
   }
 ] as const;
+
+// 通用 ERC20 ABI（来自 /Users/yutianxiang/Downloads/IERC20.json）
+export const erc20Abi = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "value", "type": "uint256" }
+    ],
+    "name": "transfer",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "from", "type": "address" },
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "value", "type": "uint256" }
+    ],
+    "name": "transferFrom",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const;
