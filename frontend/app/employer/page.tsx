@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   ListPlus,
@@ -8,12 +9,17 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  Users,
+  PieChart,
+  Calendar,
+  Save,
 } from "lucide-react";
 import {
   useAccount,
   useReadContract,
   useWriteContract,
   useWaitForTransactionReceipt,
+  usePublicClient,
 } from "wagmi";
 import { Address, isAddress, parseEther, zeroAddress } from "viem";
 import Link from "next/link";
@@ -24,16 +30,56 @@ import { WalletConnectButton } from "@/components/wallet-connect";
 interface RecipientRow {
   address: string;
   amount: string;
+  ratio?: string; // For split mode
 }
 
-const sampleRecipients: RecipientRow[] = [
-  { address: "0x6B5bC9e7c7f49b1a20F49a0f2D1D8A98B6f0b0a1", amount: "0.25" },
-  { address: "0x8E1B5C00d0e22bB6E5b93261c4d3Edc4bB5f3e4C", amount: "0.40" },
-  { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "0.35" },
-];
+type SceneMode = "payroll" | "split" | "event";
+
+const sceneConfig = {
+  payroll: {
+    title: "工资 / 定期发放",
+    desc: "适合每月发放工资、奖金或补贴",
+    icon: Users,
+    color: "text-mint",
+    payoutType: 1,
+    samples: [
+      { address: "0x6B5bC9e7c7f49b1a20F49a0f2D1D8A98B6f0b0a1", amount: "1000" },
+      { address: "0x8E1B5C00d0e22bB6E5b93261c4d3Edc4bB5f3e4C", amount: "1200" },
+      { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "800" },
+    ],
+  },
+  split: {
+    title: "按比例分账",
+    desc: "输入总额与比例，自动计算分账",
+    icon: PieChart,
+    color: "text-sky",
+    payoutType: 2,
+    samples: [
+      { address: "0x6B5bC9e7c7f49b1a20F49a0f2D1D8A98B6f0b0a1", amount: "", ratio: "40" },
+      { address: "0x8E1B5C00d0e22bB6E5b93261c4d3Edc4bB5f3e4C", amount: "", ratio: "35" },
+      { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "", ratio: "25" },
+    ],
+  },
+  event: {
+    title: "活动 / 门票奖励",
+    desc: "批量导入地址，统一金额发放",
+    icon: Calendar,
+    color: "text-amber-400",
+    payoutType: 3,
+    samples: [
+      { address: "0x6B5bC9e7c7f49b1a20F49a0f2D1D8A98B6f0b0a1", amount: "100" },
+      { address: "0x8E1B5C00d0e22bB6E5b93261c4d3Edc4bB5f3e4C", amount: "100" },
+      { address: "0x1F9fD73C5b59b4a62f7D4d3B1A6F1c0F23d7a1c2", amount: "100" },
+    ],
+  },
+};
 
 export default function EmployerPage() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const publicClient = usePublicClient();
+  const searchParams = useSearchParams();
+  const mode = (searchParams.get("mode") || "payroll") as SceneMode;
+  const scene = sceneConfig[mode];
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [recipients, setRecipients] = useState<RecipientRow[]>([
     {
@@ -50,6 +96,10 @@ export default function EmployerPage() {
   const [importText, setImportText] = useState("");
   const [importAmount, setImportAmount] = useState("");
   const [importError, setImportError] = useState<string | null>(null);
+  const [recentPayoutId, setRecentPayoutId] = useState<bigint | null>(null);
+  const [splitTotalAmount, setSplitTotalAmount] = useState<string>("");
+  const [eventUniformAmount, setEventUniformAmount] = useState<string>("");
+  const [templateName, setTemplateName] = useState<string>("");
 
   const { data: nextPayoutId, refetch: refetchNextId } = useReadContract({
     address: PAYOUT_MANAGER_ADDRESS,
@@ -71,6 +121,7 @@ export default function EmployerPage() {
   });
 
   const createWrite = useWriteContract();
+  const templateWrite = useWriteContract();
   const approveWrite = useWriteContract();
   const fundWrite = useWriteContract();
   const payout = useMemo(() => {
@@ -103,11 +154,30 @@ export default function EmployerPage() {
     };
   }, [payoutInfo]);
 
+  const nextIdText = useMemo(() =>
+    typeof nextPayoutId === "bigint" ? nextPayoutId.toString() : "加载中...",
+    [nextPayoutId]);
+
+  const currentFundTarget = useMemo(() => {
+    if (!fundPayoutId) return "未选择";
+    if (payout) return `${fundPayoutId}（${payout.closed ? "已关闭" : "开放"}）`;
+    return `${fundPayoutId}（加载中）`;
+  }, [fundPayoutId, payout]);
+
   const { isLoading: creatingOnChain, isSuccess: createConfirmed } =
     useWaitForTransactionReceipt({
       hash: createWrite.data,
       query: {
         enabled: Boolean(createWrite.data),
+        refetchInterval: 2_000,
+      },
+    });
+
+  const { isLoading: savingTemplate, isSuccess: templateSaved } =
+    useWaitForTransactionReceipt({
+      hash: templateWrite.data,
+      query: {
+        enabled: Boolean(templateWrite.data),
         refetchInterval: 2_000,
       },
     });
@@ -151,7 +221,7 @@ export default function EmployerPage() {
     );
   };
 
-  const fillSamples = () => setRecipients(sampleRecipients);
+  const fillSamples = () => setRecipients(scene.samples);
 
   const openImportModal = () => {
     setImportError(null);
@@ -177,10 +247,88 @@ export default function EmployerPage() {
     setRecipients((prev) =>
       validAddresses.map((addr, idx) => ({
         address: addr,
-        amount: importAmount || (prev[idx]?.amount ?? ""),
+        amount: mode === "event" ? eventUniformAmount : (importAmount || (prev[idx]?.amount ?? "")),
+        ratio: mode === "split" ? (prev[idx]?.ratio ?? "") : undefined,
       }))
     );
     setIsImportOpen(false);
+  };
+
+  const applyUniformAmount = () => {
+    if (!eventUniformAmount) return;
+    setRecipients((prev) =>
+      prev.map((r) => ({ ...r, amount: eventUniformAmount }))
+    );
+  };
+
+  const calculateSplitAmounts = () => {
+    if (!splitTotalAmount) return;
+    const total = parseFloat(splitTotalAmount);
+    if (isNaN(total) || total <= 0) return;
+
+    setRecipients((prev) =>
+      prev.map((r) => {
+        const ratio = parseFloat(r.ratio || "0");
+        const amount = ((ratio / 100) * total).toFixed(6);
+        return { ...r, amount };
+      })
+    );
+  };
+
+  const totalRatio = useMemo(() => {
+    if (mode !== "split") return 0;
+    return recipients.reduce((sum, r) => sum + parseFloat(r.ratio || "0"), 0);
+  }, [mode, recipients]);
+
+  const handleSaveTemplate = async () => {
+    setCreateError(null);
+    try {
+      if (!templateName.trim()) throw new Error("请输入模版名称");
+      const validRows = recipients.filter((r) => r.address && r.amount);
+      if (!validRows.length) throw new Error("请至少填写一位收款人和金额");
+
+      const invalid = validRows.find((r) => !isAddress(r.address));
+      if (invalid) throw new Error("存在无效地址，检查填写");
+
+      const token = tokenAddress ? (tokenAddress as Address) : zeroAddress;
+      if (tokenAddress && !isAddress(tokenAddress))
+        throw new Error("Token 地址格式不正确");
+
+      const amounts = validRows.map((r) => {
+        if (Number(r.amount) <= 0) throw new Error("金额需大于 0");
+        return parseEther(r.amount);
+      });
+
+      const recipientAddresses = validRows.map((r) => r.address as Address);
+
+      let gasLimit = 5000000n;
+      try {
+        if (publicClient && address) {
+          const estimated = await publicClient.estimateContractGas({
+            address: PAYOUT_MANAGER_ADDRESS,
+            abi: payoutManagerAbi,
+            functionName: "createTemplate",
+            args: [templateName, token, recipientAddresses, amounts],
+            account: address,
+          });
+          // Add 20% buffer
+          gasLimit = (estimated * 120n) / 100n;
+        }
+      } catch (e) {
+        console.warn("Template gas estimation failed", e);
+      }
+
+      await templateWrite.writeContractAsync({
+        address: PAYOUT_MANAGER_ADDRESS,
+        abi: payoutManagerAbi,
+        functionName: "createTemplate",
+        args: [templateName, token, recipientAddresses, amounts],
+        gas: gasLimit,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "保存模版失败";
+      setCreateError(message);
+    }
   };
 
   const handleCreate = async () => {
@@ -204,16 +352,33 @@ export default function EmployerPage() {
       const recipientAddresses = validRows.map((r) => r.address as Address);
       const expectedId = typeof nextPayoutId === "bigint" ? nextPayoutId : null;
 
+      let gasLimit = 5000000n;
+      try {
+        if (publicClient && address) {
+          const estimated = await publicClient.estimateContractGas({
+            address: PAYOUT_MANAGER_ADDRESS,
+            abi: payoutManagerAbi,
+            functionName: "createPayout",
+            args: [token, recipientAddresses, amounts, "", scene.payoutType],
+            account: address,
+          });
+          // Add 20% buffer
+          gasLimit = (estimated * 120n) / 100n;
+        }
+      } catch (e) {
+        console.warn("Create payout gas estimation failed", e);
+      }
+
       const hash = await createWrite.writeContractAsync({
         address: PAYOUT_MANAGER_ADDRESS,
         abi: payoutManagerAbi,
         functionName: "createPayout",
-        args: [token, recipientAddresses, amounts, "", 0],
-        // 部分 RPC 估算可能失败，提供 gas 兜底
-        gas: 800_000n,
+        args: [token, recipientAddresses, amounts, "", scene.payoutType],
+        gas: gasLimit,
       });
 
       setCreatedPayoutId(expectedId);
+      setRecentPayoutId(expectedId);
 
       await refetchNextId();
       return hash;
@@ -344,12 +509,30 @@ export default function EmployerPage() {
 
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="badge">薪酬管理台</div>
+            <div className={`badge ${scene.color}`}>
+              <scene.icon className="h-4 w-4 inline mr-1" />
+              {scene.title}
+            </div>
             <h1 className="text-3xl font-semibold mt-2">新建支付计划</h1>
             <p className="text-slate text-sm mt-2">
-              只需两步：1. 创建支付清单；2. 存入资金。随后员工即可自助领取。
+              {scene.desc}
             </p>
           </div>
+        </div>
+
+        <div className="card grid gap-3 md:grid-cols-3">
+          <Stat label="雇主视角：下一清单编号" value={nextIdText} />
+          <Stat
+            label="最近创建编号"
+            value={
+              recentPayoutId !== null
+                ? recentPayoutId.toString()
+                : createdPayoutId !== null
+                  ? createdPayoutId.toString()
+                  : "尚未创建"
+            }
+          />
+          <Stat label="当前充值对象" value={currentFundTarget} />
         </div>
 
         <div className="card space-y-4">
@@ -384,12 +567,63 @@ export default function EmployerPage() {
             </div>
           </div>
 
+          {mode === "split" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm text-slate">总金额</span>
+                <input
+                  className="input-base"
+                  placeholder="输入要分配的总金额"
+                  value={splitTotalAmount}
+                  onChange={(e) => setSplitTotalAmount(e.target.value)}
+                />
+              </label>
+              <div className="space-y-2">
+                <span className="text-sm text-slate">比例总和</span>
+                <div className={`glass-panel px-3 py-2 rounded-xl text-sm ${totalRatio === 100 ? "text-mint" : "text-amber-400"}`}>
+                  {totalRatio.toFixed(2)}% {totalRatio === 100 ? "✓" : "⚠ 应为 100%"}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === "event" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm text-slate">统一金额</span>
+                <input
+                  className="input-base"
+                  placeholder="所有收款人的统一金额"
+                  value={eventUniformAmount}
+                  onChange={(e) => setEventUniformAmount(e.target.value)}
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  className="button-secondary w-full"
+                  onClick={applyUniformAmount}
+                  disabled={!eventUniformAmount}
+                >
+                  应用到所有收款人
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate">
-                收款人名单（金额单位：MON/Token）
+                {mode === "split" ? "收款人名单（设置分配比例）" : "收款人名单（金额单位：MON/Token）"}
               </span>
               <div className="flex items-center gap-2">
+                {mode === "split" && splitTotalAmount && (
+                  <button
+                    className="button-secondary inline-flex items-center gap-2"
+                    onClick={calculateSplitAmounts}
+                  >
+                    <Sparkles className="h-4 w-4" /> 计算金额
+                  </button>
+                )}
                 <button
                   className="button-secondary inline-flex items-center gap-2"
                   onClick={openImportModal}
@@ -408,7 +642,7 @@ export default function EmployerPage() {
               {recipients.map((row, idx) => (
                 <div
                   key={idx}
-                  className="grid gap-3 md:grid-cols-[1.5fr_1fr_auto] items-center"
+                  className={mode === "split" ? "grid gap-3 md:grid-cols-[1.5fr_0.7fr_1fr_auto] items-center" : "grid gap-3 md:grid-cols-[1.5fr_1fr_auto] items-center"}
                 >
                   <input
                     className="input-base"
@@ -418,13 +652,24 @@ export default function EmployerPage() {
                       handleRecipientChange(idx, "address", e.target.value)
                     }
                   />
+                  {mode === "split" && (
+                    <input
+                      className="input-base"
+                      placeholder="比例 %"
+                      value={row.ratio || ""}
+                      onChange={(e) =>
+                        handleRecipientChange(idx, "ratio", e.target.value)
+                      }
+                    />
+                  )}
                   <input
                     className="input-base"
-                    placeholder="支付金额"
+                    placeholder={mode === "split" ? "计算后的金额" : "支付金额"}
                     value={row.amount}
                     onChange={(e) =>
                       handleRecipientChange(idx, "amount", e.target.value)
                     }
+                    readOnly={mode === "split"}
                   />
                   <button
                     className="button-secondary inline-flex items-center gap-2"
@@ -437,6 +682,37 @@ export default function EmployerPage() {
               ))}
             </div>
           </div>
+
+          {mode === "payroll" && (
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="space-y-2">
+                <span className="text-sm text-slate">模版名称（可选）</span>
+                <input
+                  className="input-base"
+                  placeholder="例如：2024年工资发放"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  className="button-secondary w-full inline-flex items-center justify-center gap-2"
+                  onClick={handleSaveTemplate}
+                  disabled={!isConnected || templateWrite.isPending || savingTemplate || !templateName.trim()}
+                >
+                  {templateWrite.isPending || savingTemplate ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> 保存中
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4" /> 保存为模版
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -466,6 +742,9 @@ export default function EmployerPage() {
               <span className="text-xs text-mint">
                 清单创建成功！编号：{createdPayoutId.toString()}
               </span>
+            ) : null}
+            {templateSaved ? (
+              <span className="text-xs text-mint">模版保存成功！</span>
             ) : null}
           </div>
         </div>
