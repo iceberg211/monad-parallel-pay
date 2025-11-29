@@ -68,19 +68,20 @@ export default function EmployerPage() {
 
   const createWrite = useWriteContract();
   const fundWrite = useWriteContract();
-  const payout = useMemo(
-    () =>
-      payoutInfo
-        ? {
-            token: payoutInfo[0],
-            creator: payoutInfo[1],
-            totalAmount: payoutInfo[2],
-            fundedAmount: payoutInfo[3],
-            closed: payoutInfo[4]
-          }
-        : null,
-    [payoutInfo]
-  );
+  const payout = useMemo(() => {
+    if (!payoutInfo || !Array.isArray(payoutInfo)) return null;
+    const [creator, token, totalAmount, fundedAmount, closed, title, payoutType] =
+      payoutInfo as unknown as [
+        `0x${string}`,
+        `0x${string}`,
+        bigint,
+        bigint,
+        boolean,
+        string,
+        number
+      ];
+    return { creator, token, totalAmount, fundedAmount, closed, title, payoutType };
+  }, [payoutInfo]);
 
   const { isLoading: creatingOnChain, isSuccess: createConfirmed } =
     useWaitForTransactionReceipt({
@@ -161,16 +162,18 @@ export default function EmployerPage() {
       });
 
       const recipientAddresses = validRows.map((r) => r.address as Address);
-      const expectedId = nextPayoutId ?? null;
+      const expectedId = typeof nextPayoutId === "bigint" ? nextPayoutId : null;
 
       const hash = await createWrite.writeContractAsync({
         address: PAYOUT_MANAGER_ADDRESS,
         abi: payoutManagerAbi,
         functionName: "createPayout",
-        args: [token, recipientAddresses, amounts]
+        args: [token, recipientAddresses, amounts, "", 0],
+        // 部分 RPC 估算可能失败，提供 gas 兜底
+        gas: 800_000n
       });
 
-      setCreatedPayoutId(expectedId ?? null);
+      setCreatedPayoutId(expectedId);
 
       await refetchNextId();
       return hash;
@@ -280,7 +283,7 @@ export default function EmployerPage() {
           <div className="space-y-2">
             <span className="text-sm text-slate">下一个 payoutId</span>
             <div className="glass-panel px-3 py-2 rounded-xl text-sm text-white">
-              {nextPayoutId !== undefined ? nextPayoutId.toString() : "加载中..."}
+              {typeof nextPayoutId === "bigint" ? nextPayoutId.toString() : "加载中..."}
             </div>
           </div>
         </div>
