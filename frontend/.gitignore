@@ -4,6 +4,9 @@
 # Compilation output
 /dist
 
+# Next.js build cache
+/.next
+
 # pnpm deploy output
 /bundle
 
