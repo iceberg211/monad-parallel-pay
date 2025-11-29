@@ -1,22 +1,23 @@
 import { hardhat, mainnet, sepolia } from "wagmi/chains";
 import { http, createConfig } from "wagmi";
-import { Connector, injected, walletConnect } from "wagmi/connectors";
+import { injected, walletConnect } from "wagmi/connectors";
 
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL;
 
-const connectors: Connector[] = [injected({ shimDisconnect: true })];
+const connectors = [
+  injected({ shimDisconnect: true }),
+  ...(walletConnectProjectId
+    ? [
+        walletConnect({
+          projectId: walletConnectProjectId,
+          showQrModal: true
+        })
+      ]
+    : [])
+];
 
-if (walletConnectProjectId) {
-  connectors.push(
-    walletConnect({
-      projectId: walletConnectProjectId,
-      showQrModal: true
-    })
-  );
-}
-
-const chains = [hardhat, sepolia, mainnet];
+const chains = [hardhat, sepolia, mainnet] as const;
 
 export const wagmiConfig = createConfig({
   chains,
