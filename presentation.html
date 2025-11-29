@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parallel Pay - Monad 上的并行支付革命</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        section {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 4rem 2rem;
+            position: relative;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin-bottom: 1rem;
+            letter-spacing: -2px;
+        }
+
+        .hero .tagline {
+            font-size: 2rem;
+            opacity: 0.9;
+            margin-bottom: 3rem;
+        }
+
+        .hero .subtitle {
+            font-size: 1.3rem;
+            max-width: 800px;
+            line-height: 1.8;
+            opacity: 0.8;
+        }
+
+        .problem {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .solution {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        .monad-power {
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+        }
+
+        .demo {
+            background: linear-gradient(135deg, #4b79a1 0%, #283e51 100%);
+        }
+
+        .scenarios {
+            background: linear-gradient(135deg, #f857a6 0%, #ff5858 100%);
+        }
+
+        .summary {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+
+        h2 {
+            font-size: 3.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-weight: 800;
+        }
+
+        h3 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        p {
+            font-size: 1.4rem;
+            line-height: 1.8;
+            max-width: 900px;
+            text-align: center;
+            margin: 0 auto 1.5rem;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 3rem auto;
+            width: 100%;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2.5rem;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 60px rgba(255, 255, 255, 0.2);
+        }
+
+        .card-icon {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .card p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stat-box {
+            display: inline-block;
+            margin: 2rem 2rem;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 5rem;
+            font-weight: 900;
+            display: block;
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 1.3rem;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+
+        .highlight {
+            color: #ffd89b;
+            font-weight: 700;
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            margin: 3rem 0;
+            flex-wrap: wrap;
+        }
+
+        .flow-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+            min-width: 200px;
+            backdrop-filter: blur(10px);
+        }
+
+        .flow-arrow {
+            font-size: 3rem;
+            opacity: 0.6;
+        }
+
+        .feature-list {
+            max-width: 800px;
+            margin: 2rem auto;
+            text-align: left;
+        }
+
+        .feature-list li {
+            font-size: 1.5rem;
+            line-height: 2.5;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #ffd89b;
+            font-weight: bold;
+            font-size: 1.8rem;
+        }
+
+        .cta {
+            margin-top: 3rem;
+            font-size: 2rem;
+            padding: 1.5rem 4rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .cta:hover {
+            transform: scale(1.05);
+        }
+
+        .scroll-hint {
+            position: absolute;
+            bottom: 2rem;
+            font-size: 1rem;
+            opacity: 0.6;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            max-width: 1000px;
+            margin: 3rem auto;
+        }
+
+        .comparison-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .comparison-item.bad {
+            border-left: 5px solid #ff5858;
+        }
+
+        .comparison-item.good {
+            border-left: 5px solid #56ab2f;
+        }
+
+        .logo {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            z-index: 1000;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            h2 { font-size: 2.5rem; }
+            p { font-size: 1.2rem; }
+            .comparison { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="logo">⚡ Parallel Pay</div>
+
+    <!-- Hero Section -->
+    <section class="hero visible">
+        <h1>Parallel Pay</h1>
+        <p class="tagline">让支付像闪电一样快</p>
+        <p class="subtitle">
+            基于 Monad 并行 EVM 的批量支付协议<br>
+            工资发放 · 收益分账 · 活动空投<br>
+            <span class="highlight">一次创建，全员并行领取</span>
+        </p>
+        <div class="scroll-hint">↓ 向下滚动了解更多</div>
+    </section>
+
+    <!-- Problem Section -->
+    <section class="problem">
+        <h2>传统链上支付的痛点</h2>
+        <p>企业、DAO、项目方经常需要给几十甚至上千人发钱</p>
+
+        <div class="cards">
+            <div class="card">
+                <span class="card-icon">🐌</span>
+                <h3>慢</h3>
+                <p>一次转一笔，100 个人要等 100 次确认</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">💸</span>
+                <h3>贵</h3>
+                <p>每笔交易独立付 Gas，成本高得离谱</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">⚠️</span>
+                <h3>风险高</h3>
+                <p>批量转账一笔失败全部回滚</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🔒</span>
+                <h3>不可扩展</h3>
+                <p>网络拥堵时交易延迟严重</p>
+            </div>
+        </div>
+
+        <p style="font-size: 1.8rem; margin-top: 3rem;">
+            <strong>我们缺少一个真正适合并行执行的大规模支付基础设施</strong>
+        </p>
+    </section>
+
+    <!-- Solution Section -->
+    <section class="solution">
+        <h2>我们的解决方案</h2>
+        <p style="font-size: 1.8rem; margin-bottom: 3rem;">
+            <strong>一键创建支付批次，每个人独立并行领取</strong>
+        </p>
+
+        <div class="flow-diagram">
+            <div class="flow-box">
+                <span style="font-size: 3rem;">👔</span>
+                <h3>发起人</h3>
+                <p>创建批次<br>一次充值</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box">
+                <span style="font-size: 3rem;">📋</span>
+                <h3>智能合约</h3>
+                <p>记录所有<br>可领金额</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-box">
+                <span style="font-size: 3rem;">👥</span>
+                <h3>收款人</h3>
+                <p>自主领取<br>并行处理</p>
+            </div>
+        </div>
+
+        <div class="cards" style="margin-top: 4rem;">
+            <div class="card">
+                <span class="card-icon">💼</span>
+                <h3>工资发放</h3>
+                <p>定期给员工发工资和奖金</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">📊</span>
+                <h3>按比例分账</h3>
+                <p>项目收益自动按比例分配</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🎁</span>
+                <h3>活动空投</h3>
+                <p>NFT/Token 批量空投发放</p>
+            </div>
+        </div>
+
+        <p style="font-size: 1.5rem; margin-top: 3rem; opacity: 0.9;">
+            这是一种以 "批次 + 自主领取" 为核心的支付原语，<br>
+            <span class="highlight">天然适合并行执行</span>
+        </p>
+    </section>
+
+    <!-- Monad Power Section -->
+    <section class="monad-power">
+        <h2>为什么选择 Monad？</h2>
+        <p style="font-size: 1.6rem; margin-bottom: 3rem;">
+            这个项目专门为 Monad 的并行 EVM 优化设计
+        </p>
+
+        <div class="stat-box">
+            <span class="stat-number">10,000+</span>
+            <span class="stat-label">TPS 吞吐量</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">1 秒</span>
+            <span class="stat-label">区块时间</span>
+        </div>
+        <div class="stat-box">
+            <span class="stat-number">并行</span>
+            <span class="stat-label">交易执行</span>
+        </div>
+
+        <h3 style="text-align: center; margin-top: 4rem;">🎯 两大核心理由</h3>
+
+        <div class="comparison">
+            <div class="comparison-item bad">
+                <h3>❌ 传统 EVM</h3>
+                <ul class="feature-list">
+                    <li>50 个人领取需要串行处理</li>
+                    <li>每笔交易独立等待</li>
+                    <li>网络拥堵时延迟严重</li>
+                    <li>总耗时 100+ 秒</li>
+                </ul>
+            </div>
+            <div class="comparison-item good">
+                <h3>✓ Monad 并行 EVM</h3>
+                <ul class="feature-list">
+                    <li>50 个人同时并行领取</li>
+                    <li>独立存储槽位互不干扰</li>
+                    <li>充分利用多核 CPU</li>
+                    <li>总耗时 1-2 秒</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="max-width: 900px; margin: 4rem auto; background: rgba(255, 255, 255, 0.1); padding: 2rem; border-radius: 15px; backdrop-filter: blur(10px);">
+            <h3 style="text-align: center;">🔑 核心技术设计</h3>
+            <p style="font-size: 1.3rem; text-align: left; padding: 0 2rem;">
+                我们将每个收款人设计为<span class="highlight">独立的存储槽位</span>：<br>
+                <code style="background: rgba(0,0,0,0.3); padding: 0.5rem 1rem; border-radius: 5px; display: inline-block; margin: 1rem 0;">
+                    claimable[payoutId][user] = amount
+                </code><br>
+                多个人 claim 的时候互不影响，让 Monad 可以真正发挥<span class="highlight">乐观并行执行</span>的能力。
+            </p>
+        </div>
+
+        <p style="font-size: 1.6rem; margin-top: 3rem;">
+            <strong>1 秒级 finality = 实时到账体验</strong><br>
+            <span style="font-size: 1.3rem; opacity: 0.8;">非常适合工资、奖励、补贴这种对速度敏感的场景</span>
+        </p>
+    </section>
+
+    <!-- Demo Section -->
+    <section class="demo">
+        <h2>演示流程</h2>
+
+        <div style="max-width: 1000px; margin: 0 auto;">
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 2.5rem; border-radius: 20px; margin-bottom: 2rem; backdrop-filter: blur(10px); border-left: 5px solid #667eea;">
+                <h3>1️⃣ 发起人：创建批次</h3>
+                <ul class="feature-list">
+                    <li>填写收款人地址和金额</li>
+                    <li>一键创建，获得批次 ID</li>
+                    <li>充值资金到合约</li>
+                </ul>
+                <p style="text-align: left; font-size: 1.2rem; opacity: 0.8; margin-top: 1rem;">
+                    ⏱️ 只需 2 步操作，1 分钟搞定
+                </p>
+            </div>
+
+            <div style="background: rgba(255, 255, 255, 0.1); padding: 2.5rem; border-radius: 20px; margin-bottom: 2rem; backdrop-filter: blur(10px); border-left: 5px solid #764ba2;">
+                <h3>2️⃣ 收款人：自助领取</h3>
+                <ul class="feature-list">
+                    <li>输入批次 ID 查询金额</li>
+                    <li>点击"领取"按钮</li>
+                    <li>1-2 秒内到账</li>
+                </ul>
+                <p style="text-align: left; font-size: 1.2rem; opacity: 0.8; margin-top: 1rem;">
+                    ⚡ Monad 秒级确认，实时到账
+                </p>
+            </div>
+
+            <div style="background: rgba(255, 255, 255, 0.15); padding: 2.5rem; border-radius: 20px; backdrop-filter: blur(10px); border: 3px solid #ffd89b;">
+                <h3>3️⃣ 并行效果展示（重点！）</h3>
+                <ul class="feature-list">
+                    <li>20 个地址同时发起领取</li>
+                    <li>在区块浏览器看到：同一区块处理所有交易</li>
+                    <li>对比：串行需要 20+ 秒，并行仅需 1-2 秒</li>
+                </ul>
+                <p style="text-align: center; font-size: 1.5rem; margin-top: 2rem; color: #ffd89b;">
+                    <strong>这正是我们为 Monad 专门设计的数据结构带来的效果</strong>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scenarios Section -->
+    <section class="scenarios">
+        <h2>能支持的场景</h2>
+        <p style="font-size: 1.5rem; margin-bottom: 3rem;">
+            批量 + 多人 + 并行，是所有这些场景的共同需求
+        </p>
+
+        <div class="cards">
+            <div class="card">
+                <span class="card-icon">🏢</span>
+                <h3>企业财务</h3>
+                <p>工资发放<br>月度补贴<br>项目奖金</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🎨</span>
+                <h3>创作者经济</h3>
+                <p>NFT 版税分配<br>内容收益分成<br>社区激励</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🏛️</span>
+                <h3>DAO 治理</h3>
+                <p>贡献者奖励<br>提案资金分配<br>国库分红</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🎯</span>
+                <h3>营销活动</h3>
+                <p>用户空投<br>推广返佣<br>活动奖励</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🎮</span>
+                <h3>游戏分发</h3>
+                <p>玩家奖励<br>赛事奖金<br>道具发放</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">💎</span>
+                <h3>DeFi 收益</h3>
+                <p>挖矿收益<br>质押奖励<br>LP 分红</p>
+            </div>
+        </div>
+
+        <div style="max-width: 900px; margin: 4rem auto; background: rgba(255, 255, 255, 0.2); padding: 3rem; border-radius: 20px; backdrop-filter: blur(10px);">
+            <h3 style="text-align: center; font-size: 2.5rem;">市场潜力</h3>
+            <p style="font-size: 1.6rem; text-align: center; margin-top: 1rem;">
+                Web3 企业级应用 + DeFi 收益分配 + NFT 版税系统
+            </p>
+            <p style="font-size: 2rem; text-align: center; margin-top: 1rem; color: #fff;">
+                = <strong>万亿级市场机会</strong>
+            </p>
+        </div>
+    </section>
+
+    <!-- Summary Section -->
+    <section class="summary">
+        <h2>用 Monad 构建新一代支付基础设施</h2>
+
+        <div class="cards" style="max-width: 1000px;">
+            <div class="card">
+                <span class="card-icon">🔒</span>
+                <h3>安全可信</h3>
+                <p>智能合约保障，链上透明可查</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">⚡</span>
+                <h3>极速到账</h3>
+                <p>1-2 秒确认，比传统链快 100 倍</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">💰</span>
+                <h3>低成本</h3>
+                <p>并行处理大幅降低 Gas 费用</p>
+            </div>
+        </div>
+
+        <div style="max-width: 900px; margin: 4rem auto; text-align: center;">
+            <p style="font-size: 2rem; line-height: 2; margin-bottom: 2rem;">
+                Parallel Pay 不是一个应用，<br>
+                而是一个能让所有批量支付场景<br>
+                变得<span class="highlight">更快、更便宜、更可信</span>的基础设施
+            </p>
+            <p style="font-size: 2.5rem; font-weight: 900; margin-top: 2rem; color: #fff;">
+                在 Monad 上，它第一次真正跑得起来
+            </p>
+        </div>
+
+        <div style="margin-top: 4rem; padding: 3rem; background: rgba(0, 0, 0, 0.3); border-radius: 20px; max-width: 800px;">
+            <h3 style="text-align: center; margin-bottom: 2rem;">核心价值</h3>
+            <ul class="feature-list" style="text-align: left;">
+                <li>把批量支付抽象成安全、可并行的基础协议</li>
+                <li>让多人实时领取变得真正可用</li>
+                <li>展示 Monad 并行 EVM 的最佳玩法</li>
+                <li>探索高性能区块链金融应用新范式</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 5rem; text-align: center;">
+            <h1 style="font-size: 4rem; margin-bottom: 2rem;">Thank You!</h1>
+            <p style="font-size: 1.8rem; opacity: 0.9;">
+                让支付像闪电一样快 ⚡
+            </p>
+            <p style="font-size: 1.3rem; margin-top: 2rem; opacity: 0.7;">
+                Parallel Pay - 探索支付与金融应用新可能
+            </p>
+        </div>
+    </section>
+
+    <script>
+        // Scroll reveal animation
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Smooth scroll for arrow keys
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === ' ') {
+                e.preventDefault();
+                window.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                window.scrollBy({ top: -window.innerHeight, behavior: 'smooth' });
+            }
+        });
+    </script>
+</body>
+</html>
