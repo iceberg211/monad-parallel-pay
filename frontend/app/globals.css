@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ink text-white font-body antialiased min-h-screen;
+  background: radial-gradient(circle at 10% 20%, rgba(36, 255, 195, 0.08), transparent 25%),
+    radial-gradient(circle at 80% 0%, rgba(122, 215, 240, 0.12), transparent 25%),
+    #0b1020;
+}
+
+a {
+  @apply text-sky hover:text-mint transition-colors;
+}
+
+.glass-panel {
+  @apply bg-panel border border-border rounded-2xl backdrop-blur;
+}
+
+.input-base {
+  @apply w-full bg-transparent border border-border rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-mint/60 placeholder:text-slate;
+}
+
+.button-primary {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-ink bg-mint hover:shadow-glow transition focus:outline-none focus:ring-2 focus:ring-mint/70 disabled:opacity-60 disabled:cursor-not-allowed;
+}
+
+.button-secondary {
+  @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold text-white border border-border bg-panel hover:border-mint/60 transition focus:outline-none focus:ring-2 focus:ring-mint/50 disabled:opacity-50;
+}
+
+.section-title {
+  @apply text-xl font-semibold mb-3;
+}
+
+.badge {
+  @apply inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs uppercase tracking-wide text-slate;
+}
+
+.card {
+  @apply glass-panel p-6 shadow-lg shadow-black/20;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  @apply font-display;
+}
