@@ -1,7 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useMemo, useState, useEffect } from "react";
 import {
   ArrowRight,
   ListPlus,
@@ -77,8 +76,19 @@ const sceneConfig = {
 export default function EmployerPage() {
   const { isConnected, address } = useAccount();
   const publicClient = usePublicClient();
-  const searchParams = useSearchParams();
-  const mode = (searchParams.get("mode") || "payroll") as SceneMode;
+
+  const [mode, setMode] = useState<SceneMode>("payroll");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const m = params.get("mode");
+      if (m && ["payroll", "split", "event"].includes(m)) {
+        setMode(m as SceneMode);
+      }
+    }
+  }, []);
+
   const scene = sceneConfig[mode];
   const [tokenAddress, setTokenAddress] = useState<string>("");
   const [recipients, setRecipients] = useState<RecipientRow[]>([
